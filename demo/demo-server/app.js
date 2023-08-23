@@ -24,11 +24,11 @@ const config = createConfig({
   // port: 8001,
   watch: true,
   nodeResolve: true,
-  appIndex: 'demo/index.html',
+  appIndex: 'demo/standalone/index.html',
   moduleDirs: ['node_modules'],
   logStartup: true,
-  openBrowser: true,
-  compatibility: 'auto',
+  open: false,
+  compatibility: 'none',
   babelExclude: [
     '**/vendor.js'
   ],
@@ -37,5 +37,4 @@ const config = createConfig({
     proxy,
   ]
 });
-config.openBrowser = true;
 startServer(config);
