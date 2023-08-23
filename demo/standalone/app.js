@@ -6,23 +6,12 @@ import '@anypoint-web-components/anypoint-button/anypoint-icon-button.js';
 import { moreVert } from '@advanced-rest-client/arc-icons/ArcIcons.js';
 import '../../api-console-app.js';
 import { DemoBase } from '../demo-base.js';
+import apiMap from '../api-map.js';
 
 class ApicApplication extends DemoBase {
   constructor() {
     super();
-    this.apis = [
-      ['google-drive-api', 'Google Drive API'],
-      ['httpbin', 'HTTPbin API'],
-      ['data-type-fragment', 'RAML data type fragment'],
-      ['demo-api', 'Demo API'],
-      ['SE-12703', 'OAS allOf body'],
-      ['APIC-262', 'Example value type'],
-      ['console-445', 'Multipart request'],
-      ['demo-api-v4', 'AMF v4'],
-      ['APIC-319', 'APIC-319'],
-      ['multi-server', 'OAS multi server'],
-      ['async-api', 'AsyncAPI'],
-    ];
+    this.apis = apiMap
   }
 
   demoTemplate() {
