@@ -1,154 +1,95 @@
-# The API Console
+# Watched API Console for Docker
 
 MuleSoft's API Console is an enterprise grade API Documentation tool.
 This is an open source version of the console used in Anypoint Platform.
+This dockerized API Console for using in development environment is based on the API Console 6.6.34 from https://github.com/mulesoft/api-console.git repository. There has been made changes to create a docker image in which changes in an api definition will be watched to rebuild it and refresh the browser view.
 
-[![Published on NPM](https://img.shields.io/npm/v/api-console.svg)](https://www.npmjs.com/package/api-console)
+## Prerequisites
 
-[![Tests and publishing](https://github.com/mulesoft/api-console/actions/workflows/deployment.yml/badge.svg)](https://github.com/mulesoft/api-console/actions/workflows/deployment.yml)
-
-## Usage
-
-For best developer experience use one of our tools to use the console in your project depending on your use case:
-
--   As a stand-alone application use [CLI tool](https://docs.api-console.io/building/cli/), [Docker image](https://docs.api-console.io/building/docker/), or [manual build](https://docs.api-console.io/building/rollup/)
--   As a web component use [manual build](https://docs.api-console.io/building/rollup/)
-
-## Version compatibility
-
-As of version 6.0.0, API Console only works with AMF model version 2 (AMF parser >= 4.0.0).
-For compatibility use any previous version. Note that support for previous versions has been dropped and this is the only version with active development.
-
-## Preview and development
-
-1.  Clone the element.
-```
-git clone https://github.com/mulesoft/api-console.git
-cd api-console
-```
-
-2.  Install dependencies.
-```
-npm i
-```
-
-3.  Start local server.
-```
-npm start
-```
-
-## Documentation
-
-Full documentation is available at https://docs.api-console.io.
-
-## Use cases
-
-Two basic use cases for API Console is:
-
--   standalone application - enables application, full window view
--   web component - lighter version, does not offer general layout and routing support
-
-### Stand-alone application
-
-To use API Console as a stand-alone application use `api-console-app` element provided by `api-console-app.js` file.
-The stand-alone application supports routing and layout elements (compared to API Console as an element).
-
-In this mode the console has title bar, drawer that holds the navigation, and main element that holds main scrolling region (the body is not a scrolling region in this case).
-It also enables mobile view when viewport width threshold is reached (740px). Wide view is enabled for viewport >= 1500px and includes request panel (try it) on the right hand side of currently rendered method.
-
-Additionally the console application includes `xhr-simple-request`, `oauth1-authorization`, and `oauth2-authorization` components.
-
-See `demo/standalone/index.html` for an example.
-
-### Web component
-
-A web component offers rendering documentation view as a default view, on user request the request panel (when try it button is pressed), and contains an always hidden navigation that cannot be triggered from element's UI. The application that hosts the element must provide some kind of an UI for the user to trigger the navigation. Navigation can be opened by setting the `navigationOpened` property/attribute to `true`.
-
-Because API console as a web component has no layout element you may want to control the height of the console. It should be set as specific value to properly support navigation drawer. Specific value can also be `flex: 1` when flex layout is used.
-
-The API Console element does not include `xhr-simple-request`, `oauth1-authorization`, or `oauth2-authorization` components. This components has to be added to the DOM separately. You can ignore this step when authorization and request events are handled by the hosting application.
-See full documentation for [handling API Console events](docs/handling-events-in-component.md).
-
-See `demo/element/index.html` for an example.
-
-### Working with AMF model
-
-API console does not offer parsing API file(s) to the data model. This is done by the [AMF](https://github.com/aml-org/amf) parser provided by MuleSoft.
-
-For both stand-alone application and the web component version of API console you must set AMF generated model on `amf` property of the console. The source can be direct result of parsing API spec file by the AMF parser or a JSON+ld model stored in a file. For a performance reasons the later is preferred.
-
-```html
-<api-console></api-console>
-<script>
+There must be created two files to configure which APIs shall be used and where they are stored. 
+#### API Paths
+The API paths must be stored in an ```api.json``` in form of
+```json
 {
-  const model = await generateApiModel();
-  const apic = document.querySelector('api-console');
-  apic.amf = model;
-  // reset selection
-  apic.selectedShape = 'summary';
-  apic.selectedShapeType = 'summary';
+  "apis/<api_name>/<api_name>.raml": "RAML 1.0"
 }
-</script>
+```
+It is just one object in which a property key represents a api path and its value the type of api definition language like ```RAML 1.0``` or ```["OAS 2.0", "application/yaml"]``` (OAS has to be an array due to the MIME-Type).
+
+The ```apis/``` part in the path is optional but recommended due to the project structure.
+
+#### Used APIs
+The apis to use must be stored in an ```api-map.js``` in form of
+```js
+export default [
+  ['<api_name>', '<Title>']
+  // The name must be the same as the name of the raml file
+  // The title is the title shown in the api select list
+];
+```
+It is a two dimensional array in which the arrays consists of two strings. The first string is the api name which has to be the same as the api name of the related api. The second string is the title which will be shown in the list of the selectable apis
+
+## Setup
+
+1. Create the docker image by follow command
+```
+  docker build -t <name>/api-console .
 ```
 
-### Styling API Console
-
-Styles can be manipulated by creating a style sheet with CSS variables definition. Each component that has been used to build the console exposes own styling API.
-
-API components ecosystem does not provide detailed documentation for styling API. Because of that when styling the console use Chrome DevTools to read name of a
-variable with default value to set in the style sheet.
-
-See `demo/themed/anypoint-theme.css` and `demo/themed/dark-theme.css` files for an example of styled API Console.
-
-#### Anypoint compatibility
-
-API Console offers a `compatibility` property that enables (some) components to switch theme to Anypoint. All form controls in request panel, buttons, icon buttons,
-and lists are switched to compatibility view automatically when `compatibility` is set.
-
-Note, that not all components support this property and therefore some styling adjustment may be needed. See `demo/themed/anypoint-theme.css` for an example of such style sheet.
-
-## Required dependencies
-
-**Note, the request panel won't run without this dependencies.**
-
-API Console bundler and the CLI tool bundles all dependencies into a `vendor.js` file and adds it to the final application.
-
-Code mirror is not ES6 ready. Their build contains AMD exports which is incompatible with native modules. Therefore the dependencies cannot be imported with the element but outside of it.
-The component requires the following scripts to be ready before it's initialized (especially body and headers editors):
-
-```html
-<script src="node_modules/jsonlint/lib/jsonlint.js"></script>
-<script src="node_modules/codemirror/lib/codemirror.js"></script>
-<script src="node_modules/codemirror/addon/mode/loadmode.js"></script>
-<script src="node_modules/codemirror/mode/meta.js"></script>
-<!-- Some basic syntax highlighting -->
-<script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
-<script src="node_modules/codemirror/mode/xml/xml.js"></script>
-<script src="node_modules/codemirror/mode/htmlmixed/htmlmixed.js"></script>
-<script src="node_modules/codemirror/addon/lint/lint.js"></script>
-<script src="node_modules/codemirror/addon/lint/json-lint.js"></script>
+2. Run a container with the image by follow command
+```sh
+docker run -d -p 8000:8000 \
+-v "<path_to_api>":/usr/src/app/apis/<api_name> \
+-v "<path_to_api-map.js>":/usr/src/app/api-map.js \
+-v "<path_to_apis.json>":/usr/src/app/apis.json \
+<name>/api-console
 ```
 
-CodeMirror's modes location. May be skipped if all possible modes are already included into the app.
+The first host path set by ```-v "<path_to_api>":/usr/src/app/apis/<api_name>``` has to contain the api file given in the apis.json file. For example if the ```my_api.raml``` is located in ```/home/user/my_api/``` then the path has to be set by ```-v "/home/user/my_api/":/usr/src/app/apis/<api_name>```.
 
-```html
-<script>
-/* global CodeMirror */
-CodeMirror.modeURL = 'node_modules/codemirror/mode/%N/%N.js';
-</script>
+## Example API Configuration
+Assuming there is a api definition named ```my_api.raml``` located in ```/home/user/my_api``` and related ```apis.json``` as well ```api-map.js``` located in ```/home/user/my_api_config``` then the config has to be as follow
+
+#### apis.json
+```json
+{
+  "apis/my_api/my_api.raml": "RAML 1.0"
+}
 ```
 
-You may want to add this dependencies to your build configuration to include it into the bundle.
-
-### Dependencies for OAuth1 and Digest authorization methods
-
-For the same reasons as for CodeMirror this dependencies are required for OAuth1 and Digest authorization panels to work.
-
-```html
-<script src="node_modules/cryptojslib/components/core.js"></script>
-<script src="node_modules/cryptojslib/rollups/sha1.js"></script>
-<script src="node_modules/cryptojslib/components/enc-base64-min.js"></script>
-<script src="node_modules/cryptojslib/rollups/md5.js"></script>
-<script src="node_modules/cryptojslib/rollups/hmac-sha1.js"></script>
-<script src="node_modules/jsrsasign/lib/jsrsasign-rsa-min.js"></script>
+#### api-map.js
+```js
+export default [
+  ['my_api', 'My Api']
+];
 ```
+
+#### docker run command
+```sh
+docker run -d -p 8000:8000 \
+-v "/home/user/my_api":/usr/src/app/apis/my_api \
+-v "/home/user/my_api_config/api-map.js":/usr/src/app/api-map.js \
+-v "/home/user/my_api_config/apis.json":/usr/src/app/apis.json \
+my_api/api-console
+```
+
+## Roadmap
+- Use API Consol without demo code
+- Allow switching themes
+
+## Contributing
+
+Please read [CONTRIBUTING.md] for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Authors
+* **Markus Hülß** - *Initial work* - [Bimpfi](https://github.com/Bimpfi)
+
+See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the CPAL-1.0 License - see the [LICENSE.md](LICENSE.md) file for details
+
+## Acknowledgments
+
+* Thanks to [Mulesoft](https://github.com/mulesoft) for developing API Console
