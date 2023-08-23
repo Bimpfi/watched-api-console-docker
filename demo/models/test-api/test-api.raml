@@ -1,0 +1,242 @@
+#%RAML 1.0
+title: Test API
+version: v2
+description: Our test API
+baseUri: https://example/
+types:
+  anyType:
+    default: 'any'
+    type: any
+    example: 'any'
+    displayName: Any type
+    description: This is any type
+  objectType:
+    type: object
+    displayName: Object type
+    description: This is object type
+    properties:
+      prop1:
+        required: true
+        example: 'prop1'
+      prop2?:
+        example: 'prop2'
+  arrayType:
+    type: array
+    displayName: Array type
+    description: This is array type
+    uniqueItems: true
+    minItems: 1
+    maxItems: 10
+    items: anyType
+    example: ['item1', 'item2']
+  stringType:
+    type: string
+    displayName: String type
+    description: This is string type
+    minLength: 1
+    maxLength: 10
+    pattern: ^.+@.+.+$
+    example: 'a@example'
+  numberType:
+    type: number
+    displayName: Number type
+    description: This is number type
+    minimum: 1
+    maximum: 10
+    format: int16
+    multipleOf: 2
+    example: 2
+  booleanType:
+    type: boolean
+    displayName: Boolean type
+    description: This is boolean type
+    example: false
+  dateType:
+    type: date-only
+    displayName: Date-only type
+    description: This is date-only type
+    example: 2015-05-23
+  timeType:
+    type: time-only
+    displayName: Time-only type
+    description: This is time-only type
+    example: 12:30:00
+  dateTimeOnlyType:
+    type: datetime-only
+    displayName: Datetime-only type
+    description: This is datetime-only type
+    example: 2015-07-04T21:00:00
+  dateTimeType:
+    type: datetime
+    displayName: Datetime type
+    description: This is datetime type
+    example: Sun, 28 Feb 2016 16:41:41 GMT
+    format: rfc2616
+  fileType:
+    type: file
+    displayName: File type
+    description: This is file type
+    fileTypes: ['image/jpeg', 'image/png']
+    maxLength: 307200
+  nilType:
+    type: nil
+    displayName: Nil type
+    description: This is nil type
+    example: null
+  unionType:
+    type: objectType | stringType
+    displayName: Union type
+    description: This is union type
+
+securitySchemes:
+  customScheme:
+    description: |
+      A custom security scheme for authenticating requests.
+    type: x-custom
+    describedBy:
+      headers:
+        SpecialToken:
+          description: |
+            Used to send a custom token.
+          type: string
+          example: special-token
+      responses:
+        401:
+          description: |
+            Bad token.
+        403:
+  oauth_1_0:
+    description: |
+      OAuth 1.0 continues to be supported for all API requests, but OAuth 2.0 is now preferred.
+    type: OAuth 1.0
+    settings:
+      requestTokenUri: https://api.mysampleapi.com/1/oauth/request_token
+      authorizationUri: https://api.mysampleapi.com/1/oauth/authorize
+      tokenCredentialsUri: https://api.mysampleapi.com/1/oauth/access_token
+      signatures: [ 'HMAC-SHA1', 'PLAINTEXT' ]
+  oauth_2_0:
+    description: |
+      Dropbox supports OAuth 2.0 for authenticating all API requests.
+    type: OAuth 2.0
+    describedBy:
+      headers:
+        Authorization:
+          description: |
+             Used to send a valid OAuth 2 access token. Do not use
+             with the "access_token" query string parameter.
+          type: string
+      queryParameters:
+        access_token:
+          description: |
+             Used to send a valid OAuth 2 access token. Do not use with
+             the "Authorization" header.
+          type: string
+      responses:
+        401:
+          description: |
+              Bad or expired token. This can happen if the user or Dropbox
+              revoked or expired an access token. To fix, re-authenticate
+              the user.
+        403:
+          description: |
+              Bad OAuth request (wrong consumer key, bad nonce, expired
+              timestamp...). Unfortunately, re-authenticating the user won't help here.
+    settings:
+      authorizationUri: https://www.dropbox.com/1/oauth2/authorize
+      accessTokenUri: https://api.dropbox.com/1/oauth2/token
+      authorizationGrants: [ authorization_code, implicit, 'urn:ietf:params:oauth:grant-type:saml2-bearer' ]
+  basic:
+    description: |
+      This API supports Basic Authentication.
+    type: Basic Authentication
+  digest:
+    description: |
+      This API supports DigestSecurityScheme Authentication.
+    type: Digest Authentication
+  passthrough:
+    description: |
+      This API supports Pass Through Authentication.
+    type: Pass Through
+    describedBy:
+      queryParameters:
+        query:
+          type: string
+      headers:
+        api_key:
+          type: string
+/test-headers:
+  displayName: Headers
+  post:
+    headers:
+      Cache-Control:
+        type: string
+        example: only-if-cached
+    body:
+      application/json:
+/test-custom-scheme:
+  displayName: Custom security scheme
+  get:
+    securedBy: [customScheme]
+/test-oauth10-scheme:
+  displayName: Oauth 1.0 security scheme
+  get:
+    securedBy: [oauth_1_0]
+/test-oauth20-scheme:
+  displayName: Oauth 2.0 security scheme
+  get:
+    securedBy: [oauth_2_0]
+/test-basic-scheme:
+  displayName: Basic security scheme
+  get:
+    securedBy: [basic]
+/test-digest-scheme:
+  displayName: Digest security scheme
+  get:
+    securedBy: [digest]
+/test-pass-through-scheme:
+  displayName: Digest pass through scheme
+  get:
+    securedBy: [passthrough]
+/test-query-parameters:
+  displayName: Query parameters
+  description: Query parameters endpoint
+  post:
+    description: Post method description
+    queryParameters:
+      page:
+        description: Specify the page that you want to retrieve
+        type:        integer
+        required:    true
+        example:     1
+      per_page:
+        description: Specify the amount of items that will be retrieved per page
+        type:        integer
+        minimum:     10
+        maximum:     200
+        default:     30
+        example:     50
+    body:
+      application/json:
+  put:
+    queryParameters:
+      param1:
+        type:        integer
+        required:    false
+        example:     1
+      param2:
+        type:        integer
+        example:     50
+    body:
+      application/json:
+  get:
+    queryString:
+      type: string
+/songs:
+  post:
+    body:
+      application/json:
+        example: |
+          {
+            "songId": "550e8400-e29b-41d4-a716-446655440000",
+            "songTitle": "Get Lucky",
+          }
